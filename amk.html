@@ -10,6 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
 
     <style>
+        /* ... (CSS tetap sama seperti sebelumnya) ... */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -76,12 +77,12 @@
             background-color: #2980b9;
         }
 
-        /* Sembunyikan form tambah siswa secara default */
-        #formTambahSiswa {
+        #formTambahSiswa,
+        #formAbsensi,
+        #absensiTabelSection {
             display: none;
         }
 
-        /* Gaya untuk form tambah siswa */
         .form-input {
             margin-top: 15px;
         }
@@ -92,12 +93,14 @@
             color: #2c3e50;
         }
         .form-input input[type="text"],
+        .form-input input[type="number"],
         .form-input select {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
             font-size: 14px;
+            box-sizing: border-box;
         }
         .form-input button {
             margin-top: 15px;
@@ -113,8 +116,8 @@
             background-color: #219653;
         }
 
-        /* Area notifikasi */
-        #notification {
+        #notification,
+        #notificationAbsensi {
             margin-top: 15px;
             padding: 10px;
             border-radius: 4px;
@@ -122,6 +125,34 @@
         }
         .success { background-color: #d4edda; color: #155724; }
         .error { background-color: #f8d7da; color: #721c24; }
+
+        .attendance-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .attendance-table th,
+        .attendance-table td {
+            border: 1px solid #ccc;
+            padding: 6px;
+            text-align: center;
+            font-size: 12px;
+        }
+        .attendance-table th {
+            background-color: #f0f8ff;
+        }
+        .date-cell {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+        }
+        .date-cell:hover {
+            background-color: #e0f7fa;
+        }
+        .status-s { background-color: #fff9c4; }
+        .status-i { background-color: #bbdefb; }
+        .status-a { background-color: #ffcdd2; }
+        .weekend-cell { background-color: #ffecb3; }
     </style>
 </head>
 <body>
@@ -131,51 +162,77 @@
     <div class="container">
         <h1>Administrasi Management Kelas</h1>
 
-        <!-- Daftar Sub-Fitur -->
         <div class="section">
             <h2>Daftar Sub-Fitur</h2>
             <ul>
-                <li>
-                    <button class="sub-feature-btn" onclick="tampilkanFormTambahSiswa()">2A. Tambah Siswa</button>
-                </li>
-                <li><strong>2B.</strong> Absensi Kelas (Placeholder)</li>
+                <!-- ✅ 2A: Tombol klik -->
+                <li><button class="sub-feature-btn" onclick="tampilkanFormTambahSiswa()">2A. Tambah Siswa</button></li>
+                
+                <!-- ✅ 2B: TOMBOL YANG BISA DIKLIK (SEPENTINGNYA!) -->
+                <li><button class="sub-feature-btn" onclick="tampilkanFormAbsensi()">2B. Absensi Kelas</button></li>
+                
                 <li><strong>2C.</strong> Jurnal Peristiwa (Placeholder)</li>
-                <li><strong>2D.</strong> (Placeholder)</li>
-                <li><strong>2E.</strong> (Placeholder)</li>
-                <li><strong>2F.</strong> (Placeholder)</li>
-                <li><strong>2G.</strong> (Placeholder)</li>
             </ul>
         </div>
 
-        <!-- Form Tambah Siswa (Fitur 2A) - disembunyikan default -->
+        <!-- Form 2A -->
         <div class="section" id="formTambahSiswa">
             <h2>2A. Tambah Siswa</h2>
             <div class="form-input">
                 <label for="namaSiswa">Nama Siswa:</label>
                 <input type="text" id="namaSiswa" placeholder="Contoh: Budi Santoso" maxlength="100">
-
                 <label for="jenisKelamin">Jenis Kelamin:</label>
                 <select id="jenisKelamin">
                     <option value="">-- Pilih --</option>
                     <option value="L">Laki-laki</option>
                     <option value="P">Perempuan</option>
                 </select>
-
                 <button onclick="tambahSiswa()">Simpan Siswa</button>
                 <div id="notification"></div>
             </div>
         </div>
 
-        <!-- Tombol contoh Firebase (opsional) -->
-        <div class="section">
-            <h2>Contoh Lain (Opsional)</h2>
-            <button class="sub-feature-btn" onclick="tambahAbsensi()">2B. Tambah Absensi Hari Ini</button>
-            <button class="sub-feature-btn" onclick="bacaJurnal()">2C. Baca Jurnal Terakhir</button>
+        <!-- Form 2B -->
+        <div class="section" id="formAbsensi">
+            <h2>2B. Absensi Kelas</h2>
+            <div class="form-input">
+                <label for="bulanAbsen">Bulan:</label>
+                <select id="bulanAbsen">
+                    <option value="01">Januari</option>
+                    <option value="02">Februari</option>
+                    <option value="03">Maret</option>
+                    <option value="04">April</option>
+                    <option value="05">Mei</option>
+                    <option value="06">Juni</option>
+                    <option value="07" selected>Juli</option>
+                    <option value="08">Agustus</option>
+                    <option value="09">September</option>
+                    <option value="10">Oktober</option>
+                    <option value="11">November</option>
+                    <option value="12">Desember</option>
+                </select>
+                <label for="tahunAbsen">Tahun:</label>
+                <input type="number" id="tahunAbsen" value="2024" min="2020" max="2030">
+                <div style="margin-top: 15px;">
+                    <button onclick="muatAbsensi()">Muat Absensi</button>
+                    <button onclick="simpanAbsensi()" style="background-color: #27ae60;">💾 Simpan</button>
+                    <button onclick="toggleEditMode()" id="editBtn">✏️ Edit</button>
+                    <button onclick="tampilkanFormTambahSiswa()" style="background-color: #8e44ad;">+ Siswa</button>
+                </div>
+                <div id="notificationAbsensi"></div>
+            </div>
+
+            <div id="absensiTabelSection">
+                <h3 style="margin-top: 20px;">Daftar Hadir Siswa – <span id="bulanTahunTampil">Juli 2024</span></h3>
+                <div style="overflow-x: auto;">
+                    <table class="attendance-table" id="tabelAbsen"></table>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // Konfigurasi Firebase
+        // === FIREBASE ===
         const firebaseConfig = {
             apiKey: "AIzaSyD5stzd9mu0n58o_QYL5Jt1aXOP9ANQl80",
             authDomain: "sd139lamanda-d7e39.firebaseapp.com",
@@ -185,102 +242,164 @@
             messagingSenderId: "101544011485",
             appId: "1:101544011485:web:74c0fa59d3c4bf74451d34"
         };
-
-        // Inisialisasi Firebase
         firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        const db = firebase.database();
 
-        // === FITUR 2A: TAMBAH SISWA ===
+        let daftarSiswa = [];
+        let dataAbsensi = {};
+        let sedangEdit = false;
+        const KELAS_PATH = "kelas/4/siswa"; // 🔑 PATH YANG DIGUNAKAN OLEH 2B
+
+        // === 2A: TAMBAH SISWA → SIMPAN KE PATH YANG SAMA DENGAN 2B ===
         function tambahSiswa() {
             const nama = document.getElementById('namaSiswa').value.trim();
             const jk = document.getElementById('jenisKelamin').value;
-            const notif = document.getElementById('notification');
+            if (!nama || !jk) {
+                showNotif("Lengkapi data siswa.", "error", "notification");
+                return;
+            }
+
+            const dataSiswa = { name: nama, gender: jk };
             const btn = document.querySelector('#formTambahSiswa button');
-
-            // Validasi
-            if (!nama) {
-                showNotification("Nama siswa tidak boleh kosong.", "error");
-                return;
-            }
-            if (!jk) {
-                showNotification("Silakan pilih jenis kelamin.", "error");
-                return;
-            }
-
-            // Nonaktifkan tombol sementara
             const originalText = btn.textContent;
             btn.disabled = true;
             btn.textContent = "Menyimpan...";
 
-            const data = {
-                nama: nama,
-                jenisKelamin: jk,
-                kelas: "Belum ditentukan",
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            };
-
-            database.ref('siswa').push(data)
+            db.ref(KELAS_PATH).push(dataSiswa)
                 .then(() => {
-                    showNotification("✅ Siswa berhasil ditambahkan!", "success");
+                    showNotif("Siswa berhasil ditambahkan dan siap untuk absensi.", "success", "notification");
                     document.getElementById('namaSiswa').value = '';
                     document.getElementById('jenisKelamin').value = '';
+                    if (!document.getElementById('absensiTabelSection').style.display.includes('none')) {
+                        muatDaftarSiswa().then(muatAbsensi);
+                    }
+                    btn.disabled = false;
+                    btn.textContent = originalText;
                 })
                 .catch(err => {
-                    showNotification("❌ Gagal menyimpan: " + err.message, "error");
-                })
-                .finally(() => {
-                    // Aktifkan kembali tombol
+                    showNotif("Gagal: " + err.message, "error", "notification");
                     btn.disabled = false;
                     btn.textContent = originalText;
                 });
         }
 
+        // === 2B: MUAT DATA ===
+        async function muatDaftarSiswa() {
+            const snap = await db.ref(KELAS_PATH).once('value');
+            daftarSiswa = [];
+            snap.forEach(child => {
+                daftarSiswa.push({ key: child.key, ...child.val() });
+            });
+            daftarSiswa.sort((a, b) => a.name.localeCompare(b.name));
+        }
+
+        async function muatAbsensi() {
+            await muatDaftarSiswa();
+            const bulan = document.getElementById('bulanAbsen').value;
+            const tahun = document.getElementById('tahunAbsen').value;
+            const path = `absensi/kelas4/2024-2025/ganjil/${tahun}-${bulan}`;
+            const snap = await db.ref(path).once('value');
+            dataAbsensi = snap.val() || {};
+
+            const namaBulan = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+            document.getElementById('bulanTahunTampil').textContent = `${namaBulan[parseInt(bulan)-1]} ${tahun}`;
+            buatTabelAbsensi();
+            document.getElementById('absensiTabelSection').style.display = 'block';
+        }
+
+        // === TAMPILKAN FORM 2B SAAT DIKLIK ===
+        function tampilkanFormAbsensi() {
+            document.getElementById('formAbsensi').style.display = 'block';
+            // Opsional: scroll ke form
+            document.getElementById('formAbsensi').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // === FUNGSI LAINNYA (buatTabelAbsensi, toggle, simpan, dll) ===
+        function buatTabelAbsensi() {
+            const bulan = document.getElementById('bulanAbsen').value;
+            const tahun = document.getElementById('tahunAbsen').value;
+            const hariDalamBulan = new Date(tahun, bulan, 0).getDate();
+
+            let html = `<thead><tr><th>No</th><th>Nama</th><th>L/P</th>`;
+            for (let d = 1; d <= hariDalamBulan; d++) html += `<th>${d}</th>`;
+            html += `<th>H</th><th>S</th><th>I</th><th>A</th></tr></thead><tbody>`;
+
+            daftarSiswa.forEach((siswa, idx) => {
+                const absen = dataAbsensi[siswa.key] || {};
+                html += `<tr><td>${idx+1}</td><td>${siswa.name}</td><td>${siswa.gender}</td>`;
+                let hitung = { H:0, S:0, I:0, A:0 };
+                for (let d = 1; d <= hariDalamBulan; d++) {
+                    const status = absen[d] || '';
+                    const kelas = getStatusClass(status, tahun, bulan, d);
+                    html += `<td class="date-cell ${kelas}" data-key="${siswa.key}" data-hari="${d}">${status}</td>`;
+                    if (status === '') hitung.H++;
+                    else hitung[status]++;
+                }
+                html += `<td>${hitung.H}</td><td>${hitung.S}</td><td>${hitung.I}</td><td>${hitung.A}</td></tr>`;
+            });
+            html += `</tbody>`;
+            document.getElementById('tabelAbsen').innerHTML = html;
+
+            if (sedangEdit) {
+                document.querySelectorAll('.date-cell').forEach(cell => {
+                    cell.onclick = () => gantiStatus(cell);
+                });
+            }
+        }
+
+        function getStatusClass(status, tahun, bulan, hari) {
+            let kelas = '';
+            if (status === 'S') kelas = 'status-s';
+            else if (status === 'I') kelas = 'status-i';
+            else if (status === 'A') kelas = 'status-a';
+            const date = new Date(tahun, bulan-1, hari);
+            if ([0,6].includes(date.getDay())) kelas += ' weekend-cell';
+            return kelas;
+        }
+
+        function gantiStatus(cell) {
+            const key = cell.dataset.key;
+            const hari = cell.dataset.hari;
+            const sekarang = cell.textContent.trim();
+            let berikutnya = '';
+            if (sekarang === '') berikutnya = 'S';
+            else if (sekarang === 'S') berikutnya = 'I';
+            else if (sekarang === 'I') berikutnya = 'A';
+            else if (sekarang === 'A') berikutnya = '';
+
+            cell.textContent = berikutnya;
+            cell.className = 'date-cell ' + getStatusClass(berikutnya, document.getElementById('tahunAbsen').value, document.getElementById('bulanAbsen').value, hari);
+
+            if (!dataAbsensi[key]) dataAbsensi[key] = {};
+            if (berikutnya === '') delete dataAbsensi[key][hari];
+            else dataAbsensi[key][hari] = berikutnya;
+        }
+
+        function toggleEditMode() {
+            sedangEdit = !sedangEdit;
+            document.getElementById('editBtn').textContent = sedangEdit ? '🔒 Selesai' : '✏️ Edit';
+            buatTabelAbsensi();
+        }
+
+        function simpanAbsensi() {
+            const bulan = document.getElementById('bulanAbsen').value;
+            const tahun = document.getElementById('tahunAbsen').value;
+            const path = `absensi/kelas4/2024-2025/ganjil/${tahun}-${bulan}`;
+            db.ref(path).set(dataAbsensi)
+                .then(() => showNotif("Absensi berhasil disimpan.", "success", "notificationAbsensi"))
+                .catch(err => showNotif("Gagal: " + err.message, "error", "notificationAbsensi"));
+        }
+
+        // === UTILITAS ===
         function tampilkanFormTambahSiswa() {
             document.getElementById('formTambahSiswa').style.display = 'block';
-            // Opsional: scroll ke form
-            document.getElementById('formTambahSiswa').scrollIntoView({ behavior: 'smooth' });
         }
-
-        function showNotification(message, type) {
-            const notif = document.getElementById('notification');
-            notif.textContent = message;
-            notif.className = type;
-            notif.style.display = "block";
-            setTimeout(() => {
-                notif.style.display = "none";
-            }, 5000);
-        }
-
-        // === FUNGSI CONTOH LAIN (TIDAK WAJIB) ===
-        function tambahAbsensi() {
-            const ref = database.ref('absensi');
-            const data = {
-                tanggal: new Date().toISOString().split('T')[0],
-                kelas: "XII-A",
-                hadir: 32,
-                izin: 2,
-                alfa: 1,
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            };
-            ref.push(data)
-                .then(() => showNotification("✅ Absensi ditambahkan!", "success"))
-                .catch(err => showNotification("❌ Gagal: " + err.message, "error"));
-        }
-
-        function bacaJurnal() {
-            const ref = database.ref('jurnal');
-            ref.orderByChild('timestamp').limitToLast(1).once('value')
-                .then(snapshot => {
-                    if (snapshot.exists()) {
-                        const data = snapshot.val();
-                        const key = Object.keys(data)[0];
-                        const jurnal = data[key];
-                        alert("Jurnal Terakhir:\n" + JSON.stringify(jurnal, null, 2));
-                    } else {
-                        showNotification("ℹ️ Belum ada jurnal.", "error");
-                    }
-                })
-                .catch(err => showNotification("❌ Gagal membaca jurnal: " + err.message, "error"));
+        function showNotif(pesan, tipe, id) {
+            const el = document.getElementById(id);
+            el.textContent = pesan;
+            el.className = tipe;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 4000);
         }
     </script>
 </body>
