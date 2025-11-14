@@ -76,6 +76,11 @@
             background-color: #2980b9;
         }
 
+        /* Sembunyikan form tambah siswa secara default */
+        #formTambahSiswa {
+            display: none;
+        }
+
         /* Gaya untuk form tambah siswa */
         .form-input {
             margin-top: 15px;
@@ -126,11 +131,13 @@
     <div class="container">
         <h1>Administrasi Management Kelas</h1>
 
-        <!-- Daftar Sub-Fitur (tetap utuh) -->
+        <!-- Daftar Sub-Fitur -->
         <div class="section">
             <h2>Daftar Sub-Fitur</h2>
             <ul>
-                <li><strong>2A.</strong> Tambah Siswa (Form di bawah)</li>
+                <li>
+                    <button class="sub-feature-btn" onclick="tampilkanFormTambahSiswa()">2A. Tambah Siswa</button>
+                </li>
                 <li><strong>2B.</strong> Absensi Kelas (Placeholder)</li>
                 <li><strong>2C.</strong> Jurnal Peristiwa (Placeholder)</li>
                 <li><strong>2D.</strong> (Placeholder)</li>
@@ -140,8 +147,8 @@
             </ul>
         </div>
 
-        <!-- Form Tambah Siswa (Fitur 2A) -->
-        <div class="section">
+        <!-- Form Tambah Siswa (Fitur 2A) - disembunyikan default -->
+        <div class="section" id="formTambahSiswa">
             <h2>2A. Tambah Siswa</h2>
             <div class="form-input">
                 <label for="namaSiswa">Nama Siswa:</label>
@@ -159,7 +166,7 @@
             </div>
         </div>
 
-        <!-- Tombol contoh Firebase (opsional, bisa dihapus nanti) -->
+        <!-- Tombol contoh Firebase (opsional) -->
         <div class="section">
             <h2>Contoh Lain (Opsional)</h2>
             <button class="sub-feature-btn" onclick="tambahAbsensi()">2B. Tambah Absensi Hari Ini</button>
@@ -168,7 +175,7 @@
     </div>
 
     <script>
-        // Konfigurasi Firebase (sesuai yang kamu kirim)
+        // Konfigurasi Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyD5stzd9mu0n58o_QYL5Jt1aXOP9ANQl80",
             authDomain: "sd139lamanda-d7e39.firebaseapp.com",
@@ -187,8 +194,8 @@
         function tambahSiswa() {
             const nama = document.getElementById('namaSiswa').value.trim();
             const jk = document.getElementById('jenisKelamin').value;
-
             const notif = document.getElementById('notification');
+            const btn = document.querySelector('#formTambahSiswa button');
 
             // Validasi
             if (!nama) {
@@ -200,25 +207,38 @@
                 return;
             }
 
-            // Format data
+            // Nonaktifkan tombol sementara
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = "Menyimpan...";
+
             const data = {
                 nama: nama,
-                jenisKelamin: jk, // "L" atau "P"
-                kelas: "Belum ditentukan", // bisa dikembangkan nanti
+                jenisKelamin: jk,
+                kelas: "Belum ditentukan",
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             };
 
-            // Simpan ke Firebase: /siswa
             database.ref('siswa').push(data)
                 .then(() => {
                     showNotification("✅ Siswa berhasil ditambahkan!", "success");
-                    // Reset form
                     document.getElementById('namaSiswa').value = '';
                     document.getElementById('jenisKelamin').value = '';
                 })
                 .catch(err => {
                     showNotification("❌ Gagal menyimpan: " + err.message, "error");
+                })
+                .finally(() => {
+                    // Aktifkan kembali tombol
+                    btn.disabled = false;
+                    btn.textContent = originalText;
                 });
+        }
+
+        function tampilkanFormTambahSiswa() {
+            document.getElementById('formTambahSiswa').style.display = 'block';
+            // Opsional: scroll ke form
+            document.getElementById('formTambahSiswa').scrollIntoView({ behavior: 'smooth' });
         }
 
         function showNotification(message, type) {
@@ -226,7 +246,6 @@
             notif.textContent = message;
             notif.className = type;
             notif.style.display = "block";
-            // Sembunyikan otomatis setelah 5 detik
             setTimeout(() => {
                 notif.style.display = "none";
             }, 5000);
