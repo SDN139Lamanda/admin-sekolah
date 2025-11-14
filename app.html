@@ -1,15 +1,26 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administrasi Perangkat Pembelajaran</title>
+
+    <!-- Firebase (versi compat untuk dukungan global) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+
+    <!-- Konfigurasi Firebase bersama dengan tatakelola139.html -->
+    <script src="firebase-config.js"></script>
+
     <style>
+        /* ... (CSS tetap sama seperti sebelumnya) ... */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #f0f8ff; /* Warna latar belakang lembut */
+            background-color: #f0f8ff;
         }
         .container {
             max-width: 800px;
@@ -30,14 +41,11 @@
             padding: 10px 15px;
             background-color: #7f8c8d;
             color: white;
-            border: none;
+            text-decoration: none;
             border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            text-decoration: none; /* Hapus garis bawah jika tombol adalah link */
         }
         .back-btn:hover {
-            background-color: #6c7b8b; /* Warna saat dihover */
+            background-color: #6c7b8b;
         }
         .section {
             margin-bottom: 25px;
@@ -47,70 +55,152 @@
             border-bottom: 2px solid #3498db;
             padding-bottom: 5px;
         }
-        ul {
-            padding-left: 20px;
+        .upload-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #fafafa;
         }
-        li {
-            margin-bottom: 10px;
-            line-height: 1.5;
-        }
-        /* Tombol untuk sub-fitur jika diperlukan di masa mendatang */
-        .sub-feature-btn {
+        .upload-item label {
             display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .upload-item input[type="file"] {
             width: 100%;
-            padding: 12px;
-            margin-bottom: 10px;
-            background-color: #3498db;
+        }
+        .btn-simpan {
+            background-color: #2ecc71;
             color: white;
             border: none;
-            border-radius: 4px;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 6px;
             cursor: pointer;
-            text-align: left; /* Rata kiri agar teks tombol tidak di tengah */
-            font-size: 14px;
+            width: 100%;
+            margin-top: 20px;
         }
-        .sub-feature-btn:hover {
-            background-color: #2980b9;
+        .btn-simpan:hover {
+            background-color: #27ae60;
+        }
+        #notifications {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #ecf0f1;
+            border-radius: 6px;
+            display: none;
+        }
+        #notifications p {
+            margin: 5px 0;
         }
     </style>
 </head>
 <body>
 
-    <!-- Tombol Kembali -->
     <a href="tatakelola139.html" class="back-btn">← Kembali ke Menu Utama</a>
 
     <div class="container">
         <h1>Administrasi Perangkat Pembelajaran</h1>
 
-        <!-- Sub-fitur Perangkat Pembelajaran -->
         <div class="section">
-            <h2>Daftar Perangkat</h2>
-            <ul>
-                <li><strong>1.A.</strong> Silabus (Placeholder)</li>
-                <li><strong>1.B.</strong> Rencana Pelaksanaan Pembelajaran (RPP) (Placeholder)</li>
-                <li><strong>1.C.</strong> Modul Ajar (Placeholder)</li>
-                <li><strong>1.D.</strong> Bahan Ajar (Placeholder)</li>
-                <li><strong>1.E.</strong> Media Pembelajaran (Placeholder)</li>
-                <li><strong>1.F.</strong> Instrumen Penilaian (Placeholder)</li>
-                <li><strong>1.G.</strong> Laporan Pelaksanaan Pembelajaran (Placeholder)</li>
-            </ul>
-        </div>
+            <h2>Upload Perangkat Pembelajaran</h2>
 
-        <!-- Contoh alternatif jika ingin menggunakan tombol untuk masing-masing sub-fitur -->
-        <!--
-        <div class="section">
-            <h2>Akses Cepat Sub-Fitur</h2>
-            <button class="sub-feature-btn" onclick="alert('Fitur 1.A belum tersedia')">1.A. Silabus</button>
-            <button class="sub-feature-btn" onclick="alert('Fitur 1.B belum tersedia')">1.B. Rencana Pelaksanaan Pembelajaran (RPP)</button>
-            <button class="sub-feature-btn" onclick="alert('Fitur 1.C belum tersedia')">1.C. Modul Ajar</button>
-            <button class="sub-feature-btn" onclick="alert('Fitur 1.D belum tersedia')">1.D. Bahan Ajar</button>
-            <button class="sub-feature-btn" onclick="alert('Fitur 1.E belum tersedia')">1.E. Media Pembelajaran</button>
-            <button class="sub-feature-btn" onclick="alert('Fitur 1.F belum tersedia')">1.F. Instrumen Penilaian</button>
-            <button class="sub-feature-btn" onclick="alert('Fitur 1.G belum tersedia')">1.G. Laporan Pelaksanaan Pembelajaran</button>
-        </div>
-        -->
+            <!-- Form Upload (sama seperti sebelumnya) -->
+            <div class="upload-item">
+                <label for="silabus">1.A. Silabus</label>
+                <input type="file" id="silabus" accept=".pdf,.doc,.docx">
+            </div>
+            <div class="upload-item">
+                <label for="rpp">1.B. Rencana Pelaksanaan Pembelajaran (RPP)</label>
+                <input type="file" id="rpp" accept=".pdf,.doc,.docx">
+            </div>
+            <div class="upload-item">
+                <label for="modul_ajar">1.C. Modul Ajar</label>
+                <input type="file" id="modul_ajar" accept=".pdf,.doc,.docx,.zip">
+            </div>
+            <div class="upload-item">
+                <label for="bahan_ajar">1.D. Bahan Ajar</label>
+                <input type="file" id="bahan_ajar" accept=".pdf,.ppt,.pptx,.zip">
+            </div>
+            <div class="upload-item">
+                <label for="media_pembelajaran">1.E. Media Pembelajaran</label>
+                <input type="file" id="media_pembelajaran" accept=".mp4,.mp3,.zip,.pdf">
+            </div>
+            <div class="upload-item">
+                <label for="instrumen_penilaian">1.F. Instrumen Penilaian</label>
+                <input type="file" id="instrumen_penilaian" accept=".pdf,.xlsx,.docx">
+            </div>
+            <div class="upload-item">
+                <label for="laporan_pelaksanaan">1.G. Laporan Pelaksanaan Pembelajaran</label>
+                <input type="file" id="laporan_pelaksanaan" accept=".pdf,.docx">
+            </div>
 
+            <button class="btn-simpan" onclick="simpanSemua()">💾 Simpan Semua File</button>
+
+            <div id="notifications"></div>
+        </div>
     </div>
 
-</body>
+    <script>
+        async function simpanSemua() {
+            const notifications = document.getElementById('notifications');
+            notifications.innerHTML = '<p>📤 Sedang mengunggah file...</p>';
+            notifications.style.color = '#3498db';
+            notifications.style.display = 'block';
 
+            const items = [
+                { id: 'silabus', kode: '1.A', nama: 'Silabus' },
+                { id: 'rpp', kode: '1.B', nama: 'RPP' },
+                { id: 'modul_ajar', kode: '1.C', nama: 'Modul Ajar' },
+                { id: 'bahan_ajar', kode: '1.D', nama: 'Bahan Ajar' },
+                { id: 'media_pembelajaran', kode: '1.E', nama: 'Media Pembelajaran' },
+                { id: 'instrumen_penilaian', kode: '1.F', nama: 'Instrumen Penilaian' },
+                { id: 'laporan_pelaksanaan', kode: '1.G', nama: 'Laporan Pelaksanaan' }
+            ];
+
+            const hasil = [];
+
+            for (const item of items) {
+                const fileInput = document.getElementById(item.id);
+                const file = fileInput.files[0];
+                if (file) {
+                    try {
+                        // Upload ke Firebase Storage
+                        const storageRef = firebase.storage().ref(`perangkat_pembelajaran/${item.id}/${file.name}`);
+                        await storageRef.put(file);
+                        const downloadURL = await storageRef.getDownloadURL();
+
+                        // Simpan ke Firestore
+                        await firebase.firestore().collection("perangkat_pembelajaran").doc(item.id).set({
+                            kode: item.kode,
+                            nama: item.nama,
+                            nama_file: file.name,
+                            ukuran_byte: file.size,
+                            url: downloadURL,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+
+                        hasil.push(`✅ ${item.kode} berhasil disimpan.`);
+                    } catch (error) {
+                        console.error("Error pada", item.kode, error);
+                        hasil.push(`❌ ${item.kode} GAGAL: ${error.message}`);
+                    }
+                } else {
+                    hasil.push(`⚪ ${item.kode} dilewati.`);
+                }
+            }
+
+            notifications.innerHTML = hasil.map(msg => `<p>${msg}</p>`).join('');
+            notifications.style.color = '#2c3e50';
+        }
+
+        // Tampilkan notifikasi container saat simpan diklik
+        document.querySelector('.btn-simpan').addEventListener('click', () => {
+            document.getElementById('notifications').style.display = 'block';
+        });
+    </script>
+
+</body>
 </html>
