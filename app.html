@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -6,16 +5,84 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administrasi Perangkat Pembelajaran</title>
 
-    <!-- Firebase (versi compat untuk dukungan global) -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+    <!-- Firebase SDK (versi modular) -->
+    <script type="module">
+        // Import Firebase sesuai kebutuhan
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-    <!-- Konfigurasi Firebase bersama dengan tatakelola139.html -->
-    <script src="firebase-config.js"></script>
+        // 🔴 GANTI DENGAN KONFIGURASI FIREBASE ANDA
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef123456789"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        // Fungsi Simpan
+        window.simpanSemua = async function() {
+            const notifications = document.getElementById('notifications');
+            notifications.innerHTML = '<p>📤 Sedang mengunggah file...</p>';
+            notifications.style.color = '#3498db';
+
+            const items = [
+                { id: 'silabus', kode: '1.A', nama: 'Silabus' },
+                { id: 'rpp', kode: '1.B', nama: 'Rencana Pelaksanaan Pembelajaran (RPP)' },
+                { id: 'modul_ajar', kode: '1.C', nama: 'Modul Ajar' },
+                { id: 'bahan_ajar', kode: '1.D', nama: 'Bahan Ajar' },
+                { id: 'media_pembelajaran', kode: '1.E', nama: 'Media Pembelajaran' },
+                { id: 'instrumen_penilaian', kode: '1.F', nama: 'Instrumen Penilaian' },
+                { id: 'laporan_pelaksanaan', kode: '1.G', nama: 'Laporan Pelaksanaan Pembelajaran' }
+            ];
+
+            const hasil = [];
+
+            for (const item of items) {
+                const fileInput = document.getElementById(item.id);
+                const file = fileInput.files[0];
+                if (file) {
+                    try {
+                        // Upload ke Firebase Storage
+                        const storageRef = ref(storage, `perangkat_pembelajaran/${item.id}/${file.name}`);
+                        await uploadBytes(storageRef, file);
+                        const downloadURL = await getDownloadURL(storageRef);
+
+                        // Simpan metadata ke Firestore
+                        const docRef = doc(db, "perangkat_pembelajaran", item.id);
+                        await setDoc(docRef, {
+                            kode: item.kode,
+                            nama: item.nama,
+                            nama_file: file.name,
+                            ukuran_byte: file.size,
+                            url: downloadURL,
+                            timestamp: new Date()
+                        });
+
+                        hasil.push(`${item.kode} berhasil disimpan.`);
+                    } catch (error) {
+                        console.error("Error upload", item.kode, error);
+                        hasil.push(`${item.kode} GAGAL: ${error.message}`);
+                    }
+                } else {
+                    hasil.push(`${item.kode} dilewati (tidak ada file).`);
+                }
+            }
+
+            // Tampilkan hasil
+            notifications.innerHTML = hasil.map(msg => `<p>${msg}</p>`).join('');
+            notifications.style.color = '#27ae60';
+        };
+    </script>
 
     <style>
-        /* ... (CSS tetap sama seperti sebelumnya) ... */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -107,7 +174,7 @@
         <div class="section">
             <h2>Upload Perangkat Pembelajaran</h2>
 
-            <!-- Form Upload (sama seperti sebelumnya) -->
+            <!-- Form Upload -->
             <div class="upload-item">
                 <label for="silabus">1.A. Silabus</label>
                 <input type="file" id="silabus" accept=".pdf,.doc,.docx">
@@ -144,59 +211,7 @@
     </div>
 
     <script>
-        async function simpanSemua() {
-            const notifications = document.getElementById('notifications');
-            notifications.innerHTML = '<p>📤 Sedang mengunggah file...</p>';
-            notifications.style.color = '#3498db';
-            notifications.style.display = 'block';
-
-            const items = [
-                { id: 'silabus', kode: '1.A', nama: 'Silabus' },
-                { id: 'rpp', kode: '1.B', nama: 'RPP' },
-                { id: 'modul_ajar', kode: '1.C', nama: 'Modul Ajar' },
-                { id: 'bahan_ajar', kode: '1.D', nama: 'Bahan Ajar' },
-                { id: 'media_pembelajaran', kode: '1.E', nama: 'Media Pembelajaran' },
-                { id: 'instrumen_penilaian', kode: '1.F', nama: 'Instrumen Penilaian' },
-                { id: 'laporan_pelaksanaan', kode: '1.G', nama: 'Laporan Pelaksanaan' }
-            ];
-
-            const hasil = [];
-
-            for (const item of items) {
-                const fileInput = document.getElementById(item.id);
-                const file = fileInput.files[0];
-                if (file) {
-                    try {
-                        // Upload ke Firebase Storage
-                        const storageRef = firebase.storage().ref(`perangkat_pembelajaran/${item.id}/${file.name}`);
-                        await storageRef.put(file);
-                        const downloadURL = await storageRef.getDownloadURL();
-
-                        // Simpan ke Firestore
-                        await firebase.firestore().collection("perangkat_pembelajaran").doc(item.id).set({
-                            kode: item.kode,
-                            nama: item.nama,
-                            nama_file: file.name,
-                            ukuran_byte: file.size,
-                            url: downloadURL,
-                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-
-                        hasil.push(`✅ ${item.kode} berhasil disimpan.`);
-                    } catch (error) {
-                        console.error("Error pada", item.kode, error);
-                        hasil.push(`❌ ${item.kode} GAGAL: ${error.message}`);
-                    }
-                } else {
-                    hasil.push(`⚪ ${item.kode} dilewati.`);
-                }
-            }
-
-            notifications.innerHTML = hasil.map(msg => `<p>${msg}</p>`).join('');
-            notifications.style.color = '#2c3e50';
-        }
-
-        // Tampilkan notifikasi container saat simpan diklik
+        // Tampilkan notifikasi saat tombol diklik
         document.querySelector('.btn-simpan').addEventListener('click', () => {
             document.getElementById('notifications').style.display = 'block';
         });
