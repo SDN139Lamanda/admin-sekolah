@@ -5,85 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administrasi Perangkat Pembelajaran</title>
 
-    <!-- Firebase SDK (versi modular) -->
-    <script type="module">
-        // Import Firebase sesuai kebutuhan
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+    <!-- Firebase SDK (versi compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
-        // 
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyCYoUcSKj8aAZTaNgKtrn0bYHPmedVHAE4",
-  authDomain: "sdn139lamanda-a67a8.firebaseapp.com",
-  databaseURL: "https://sdn139lamanda-a67a8-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "sdn139lamanda-a67a8",
-  storageBucket: "sdn139lamanda-a67a8.firebasestorage.app",
-  messagingSenderId: "520862158793",
-  appId: "1:520862158793:web:8c527473b9accfc3a06218",
-  measurementId: "G-K60HNBJ8P7"
-};
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const storage = getStorage(app);
-
-        // Fungsi Simpan
-        window.simpanSemua = async function() {
-            const notifications = document.getElementById('notifications');
-            notifications.innerHTML = '<p>📤 Sedang mengunggah file...</p>';
-            notifications.style.color = '#3498db';
-
-            const items = [
-                { id: 'silabus', kode: '1.A', nama: 'Silabus' },
-                { id: 'rpp', kode: '1.B', nama: 'Rencana Pelaksanaan Pembelajaran (RPP)' },
-                { id: 'modul_ajar', kode: '1.C', nama: 'Modul Ajar' },
-                { id: 'bahan_ajar', kode: '1.D', nama: 'Bahan Ajar' },
-                { id: 'media_pembelajaran', kode: '1.E', nama: 'Media Pembelajaran' },
-                { id: 'instrumen_penilaian', kode: '1.F', nama: 'Instrumen Penilaian' },
-                { id: 'laporan_pelaksanaan', kode: '1.G', nama: 'Laporan Pelaksanaan Pembelajaran' }
-            ];
-
-            const hasil = [];
-
-            for (const item of items) {
-                const fileInput = document.getElementById(item.id);
-                const file = fileInput.files[0];
-                if (file) {
-                    try {
-                        // Upload ke Firebase Storage
-                        const storageRef = ref(storage, `perangkat_pembelajaran/${item.id}/${file.name}`);
-                        await uploadBytes(storageRef, file);
-                        const downloadURL = await getDownloadURL(storageRef);
-
-                        // Simpan metadata ke Firestore
-                        const docRef = doc(db, "perangkat_pembelajaran", item.id);
-                        await setDoc(docRef, {
-                            kode: item.kode,
-                            nama: item.nama,
-                            nama_file: file.name,
-                            ukuran_byte: file.size,
-                            url: downloadURL,
-                            timestamp: new Date()
-                        });
-
-                        hasil.push(`${item.kode} berhasil disimpan.`);
-                    } catch (error) {
-                        console.error("Error upload", item.kode, error);
-                        hasil.push(`${item.kode} GAGAL: ${error.message}`);
-                    }
-                } else {
-                    hasil.push(`${item.kode} dilewati (tidak ada file).`);
-                }
-            }
-
-            // Tampilkan hasil
-            notifications.innerHTML = hasil.map(msg => `<p>${msg}</p>`).join('');
-            notifications.style.color = '#27ae60';
-        };
-    </script>
+    <!-- Konfigurasi Firebase Anda -->
+    <script src="firebase-config.js"></script>
 
     <style>
         body {
@@ -127,19 +55,20 @@ const firebaseConfig = {
         }
         .upload-item {
             margin-bottom: 15px;
-            padding: 10px;
+            padding: 12px;
             border: 1px solid #ddd;
             border-radius: 6px;
             background-color: #fafafa;
         }
         .upload-item label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
             font-weight: bold;
             color: #2c3e50;
         }
         .upload-item input[type="file"] {
             width: 100%;
+            padding: 4px 0;
         }
         .btn-simpan {
             background-color: #2ecc71;
@@ -151,19 +80,22 @@ const firebaseConfig = {
             cursor: pointer;
             width: 100%;
             margin-top: 20px;
+            font-weight: bold;
         }
         .btn-simpan:hover {
             background-color: #27ae60;
         }
         #notifications {
             margin-top: 20px;
-            padding: 10px;
+            padding: 12px;
             background-color: #ecf0f1;
             border-radius: 6px;
             display: none;
+            font-family: monospace;
         }
         #notifications p {
-            margin: 5px 0;
+            margin: 4px 0;
+            line-height: 1.4;
         }
     </style>
 </head>
@@ -177,7 +109,6 @@ const firebaseConfig = {
         <div class="section">
             <h2>Upload Perangkat Pembelajaran</h2>
 
-            <!-- Form Upload -->
             <div class="upload-item">
                 <label for="silabus">1.A. Silabus</label>
                 <input type="file" id="silabus" accept=".pdf,.doc,.docx">
@@ -214,12 +145,60 @@ const firebaseConfig = {
     </div>
 
     <script>
-        // Tampilkan notifikasi saat tombol diklik
-        document.querySelector('.btn-simpan').addEventListener('click', () => {
-            document.getElementById('notifications').style.display = 'block';
-        });
+        async function simpanSemua() {
+            const notif = document.getElementById('notifications');
+            notif.innerHTML = '<p>📤 Memproses upload...</p>';
+            notif.style.display = 'block';
+            notif.style.color = '#3498db';
+
+            const daftar = [
+                { id: 'silabus', kode: '1.A', nama: 'Silabus' },
+                { id: 'rpp', kode: '1.B', nama: 'Rencana Pelaksanaan Pembelajaran (RPP)' },
+                { id: 'modul_ajar', kode: '1.C', nama: 'Modul Ajar' },
+                { id: 'bahan_ajar', kode: '1.D', nama: 'Bahan Ajar' },
+                { id: 'media_pembelajaran', kode: '1.E', nama: 'Media Pembelajaran' },
+                { id: 'instrumen_penilaian', kode: '1.F', nama: 'Instrumen Penilaian' },
+                { id: 'laporan_pelaksanaan', kode: '1.G', nama: 'Laporan Pelaksanaan Pembelajaran' }
+            ];
+
+            const hasil = [];
+
+            for (const item of daftar) {
+                const input = document.getElementById(item.id);
+                const file = input.files[0];
+                if (file) {
+                    try {
+                        const path = `perangkat_pembelajaran/${item.id}/${file.name}`;
+                        const storageRef = firebase.storage().ref(path);
+                        await storageRef.put(file);
+                        const url = await storageRef.getDownloadURL();
+
+                        await firebase.firestore()
+                            .collection("perangkat_pembelajaran")
+                            .doc(item.id)
+                            .set({
+                                kode: item.kode,
+                                nama: item.nama,
+                                nama_file: file.name,
+                                ukuran: file.size,
+                                url: url,
+                                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+
+                        hasil.push(`✅ ${item.kode} sukses.`);
+                    } catch (err) {
+                        console.error("Gagal upload", item.kode, err);
+                        hasil.push(`❌ ${item.kode}: ${err.message.substring(0, 60)}...`);
+                    }
+                } else {
+                    hasil.push(`⚪ ${item.kode}: dilewati`);
+                }
+            }
+
+            notif.innerHTML = hasil.map(h => `<p>${h}</p>`).join('');
+            notif.style.color = '#2c3e50';
+        }
     </script>
 
 </body>
 </html>
-
