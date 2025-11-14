@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrasi Management Kelas</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f8ff;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .back-btn {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            padding: 10px 15px;
+            background-color: #7f8c8d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+        }
+        .back-btn:hover {
+            background-color: #6c7b8b;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        h2 {
+            color: #34495e;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        .sub-feature-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 14px;
+        }
+        .sub-feature-btn:hover {
+            background-color: #2980b9;
+        }
+
+        /* Gaya untuk form tambah siswa */
+        .form-input {
+            margin-top: 15px;
+        }
+        .form-input label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .form-input input[type="text"],
+        .form-input select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .form-input button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .form-input button:hover {
+            background-color: #219653;
+        }
+
+        /* Area notifikasi */
+        #notification {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+
+    <a href="tatakelola139.html" class="back-btn">← Kembali ke Menu Utama</a>
+
+    <div class="container">
+        <h1>Administrasi Management Kelas</h1>
+
+        <!-- Daftar Sub-Fitur (tetap utuh) -->
+        <div class="section">
+            <h2>Daftar Sub-Fitur</h2>
+            <ul>
+                <li><strong>2A.</strong> Tambah Siswa (Form di bawah)</li>
+                <li><strong>2B.</strong> Absensi Kelas (Placeholder)</li>
+                <li><strong>2C.</strong> Jurnal Peristiwa (Placeholder)</li>
+                <li><strong>2D.</strong> (Placeholder)</li>
+                <li><strong>2E.</strong> (Placeholder)</li>
+                <li><strong>2F.</strong> (Placeholder)</li>
+                <li><strong>2G.</strong> (Placeholder)</li>
+            </ul>
+        </div>
+
+        <!-- Form Tambah Siswa (Fitur 2A) -->
+        <div class="section">
+            <h2>2A. Tambah Siswa</h2>
+            <div class="form-input">
+                <label for="namaSiswa">Nama Siswa:</label>
+                <input type="text" id="namaSiswa" placeholder="Contoh: Budi Santoso" maxlength="100">
+
+                <label for="jenisKelamin">Jenis Kelamin:</label>
+                <select id="jenisKelamin">
+                    <option value="">-- Pilih --</option>
+                    <option value="L">Laki-laki</option>
+                    <option value="P">Perempuan</option>
+                </select>
+
+                <button onclick="tambahSiswa()">Simpan Siswa</button>
+                <div id="notification"></div>
+            </div>
+        </div>
+
+        <!-- Tombol contoh Firebase (opsional, bisa dihapus nanti) -->
+        <div class="section">
+            <h2>Contoh Lain (Opsional)</h2>
+            <button class="sub-feature-btn" onclick="tambahAbsensi()">2B. Tambah Absensi Hari Ini</button>
+            <button class="sub-feature-btn" onclick="bacaJurnal()">2C. Baca Jurnal Terakhir</button>
+        </div>
+    </div>
+
+    <script>
+        // Konfigurasi Firebase (sesuai yang kamu kirim)
+        const firebaseConfig = {
+            apiKey: "AIzaSyD5stzd9mu0n58o_QYL5Jt1aXOP9ANQl80",
+            authDomain: "sd139lamanda-d7e39.firebaseapp.com",
+            databaseURL: "https://sd139lamanda-d7e39-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "sd139lamanda-d7e39",
+            storageBucket: "sd139lamanda-d7e39.firebasestorage.app",
+            messagingSenderId: "101544011485",
+            appId: "1:101544011485:web:74c0fa59d3c4bf74451d34"
+        };
+
+        // Inisialisasi Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // === FITUR 2A: TAMBAH SISWA ===
+        function tambahSiswa() {
+            const nama = document.getElementById('namaSiswa').value.trim();
+            const jk = document.getElementById('jenisKelamin').value;
+
+            const notif = document.getElementById('notification');
+
+            // Validasi
+            if (!nama) {
+                showNotification("Nama siswa tidak boleh kosong.", "error");
+                return;
+            }
+            if (!jk) {
+                showNotification("Silakan pilih jenis kelamin.", "error");
+                return;
+            }
+
+            // Format data
+            const data = {
+                nama: nama,
+                jenisKelamin: jk, // "L" atau "P"
+                kelas: "Belum ditentukan", // bisa dikembangkan nanti
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
+
+            // Simpan ke Firebase: /siswa
+            database.ref('siswa').push(data)
+                .then(() => {
+                    showNotification("✅ Siswa berhasil ditambahkan!", "success");
+                    // Reset form
+                    document.getElementById('namaSiswa').value = '';
+                    document.getElementById('jenisKelamin').value = '';
+                })
+                .catch(err => {
+                    showNotification("❌ Gagal menyimpan: " + err.message, "error");
+                });
+        }
+
+        function showNotification(message, type) {
+            const notif = document.getElementById('notification');
+            notif.textContent = message;
+            notif.className = type;
+            notif.style.display = "block";
+            // Sembunyikan otomatis setelah 5 detik
+            setTimeout(() => {
+                notif.style.display = "none";
+            }, 5000);
+        }
+
+        // === FUNGSI CONTOH LAIN (TIDAK WAJIB) ===
+        function tambahAbsensi() {
+            const ref = database.ref('absensi');
+            const data = {
+                tanggal: new Date().toISOString().split('T')[0],
+                kelas: "XII-A",
+                hadir: 32,
+                izin: 2,
+                alfa: 1,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
+            ref.push(data)
+                .then(() => showNotification("✅ Absensi ditambahkan!", "success"))
+                .catch(err => showNotification("❌ Gagal: " + err.message, "error"));
+        }
+
+        function bacaJurnal() {
+            const ref = database.ref('jurnal');
+            ref.orderByChild('timestamp').limitToLast(1).once('value')
+                .then(snapshot => {
+                    if (snapshot.exists()) {
+                        const data = snapshot.val();
+                        const key = Object.keys(data)[0];
+                        const jurnal = data[key];
+                        alert("Jurnal Terakhir:\n" + JSON.stringify(jurnal, null, 2));
+                    } else {
+                        showNotification("ℹ️ Belum ada jurnal.", "error");
+                    }
+                })
+                .catch(err => showNotification("❌ Gagal membaca jurnal: " + err.message, "error"));
+        }
+    </script>
+</body>
+</html>
