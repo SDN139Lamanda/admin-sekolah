@@ -155,7 +155,11 @@
         .status-s { background-color: #fff9c4; }
         .status-i { background-color: #bbdefb; }
         .status-a { background-color: #ffcdd2; }
-        .weekend-cell { background-color: #ffecb3; }
+        .weekend-cell {
+            background-color: #fee2e2;
+            color: #ef4444;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -249,7 +253,7 @@
         let sedangEdit = false;
         const KELAS_PATH = "kelas/4/siswa";
 
-        // === 2A: TAMBAH SISWA → SIMPAN KE PATH YANG DIBACA 2B ===
+        // === 2A: TAMBAH SISWA ===
         function tambahSiswa() {
             const nama = document.getElementById('namaSiswa').value.trim();
             const jk = document.getElementById('jenisKelamin').value;
@@ -266,7 +270,7 @@
 
             db.ref(KELAS_PATH).push(dataSiswa)
                 .then(() => {
-                    showNotif("Siswa berhasil ditambahkan dan siap untuk absensi.", "success", "notification");
+                    showNotif("Siswa berhasil ditambahkan.", "success", "notification");
                     document.getElementById('namaSiswa').value = '';
                     document.getElementById('jenisKelamin').value = '';
                     if (!document.getElementById('absensiTabelSection').style.display.includes('none')) {
@@ -306,7 +310,6 @@
             document.getElementById('absensiTabelSection').style.display = 'block';
         }
 
-        // === TAMPILKAN FORM 2B SAAT DIKLIK ===
         function tampilkanFormAbsensi() {
             document.getElementById('formAbsensi').style.display = 'block';
             document.getElementById('formAbsensi').scrollIntoView({ behavior: 'smooth' });
@@ -315,7 +318,7 @@
             document.getElementById('formTambahSiswa').style.display = 'block';
         }
 
-        // === TABEL ABSENSI DENGAN ✅ UNTUK HADIR ===
+        // === TABEL ABSENSI: KOSONG SECARA DEFAULT ===
         function buatTabelAbsensi() {
             const bulan = document.getElementById('bulanAbsen').value;
             const tahun = document.getElementById('tahunAbsen').value;
@@ -328,16 +331,27 @@
             daftarSiswa.forEach((siswa, idx) => {
                 const absen = dataAbsensi[siswa.key] || {};
                 html += `<tr><td>${idx+1}</td><td>${siswa.name}</td><td>${siswa.gender}</td>`;
-                let hitung = { H:0, S:0, I:0, A:0 };
                 for (let d = 1; d <= hariDalamBulan; d++) {
                     const status = absen[d] || '';
-                    const display = status === '' ? '✅' : status;
-                    const kelas = getStatusClass(status, tahun, bulan, d);
-                    html += `<td class="date-cell ${kelas}" data-key="${siswa.key}" data-hari="${d}">${display}</td>`;
-                    if (status === '') hitung.H++;
-                    else hitung[status]++;
+                    const kelas = getStatusClass(tahun, bulan, d);
+                    html += `<td class="date-cell ${kelas}" data-key="${siswa.key}" data-hari="${d}">${status}</td>`;
                 }
-                html += `<td>${hitung.H}</td><td>${hitung.S}</td><td>${hitung.I}</td><td>${hitung.A}</td></tr>`;
+
+                // Hitung H = hari aktif - (S+I+A)
+                let totalHariAktif = 0;
+                let s = 0, i = 0, a = 0;
+                for (let d = 1; d <= hariDalamBulan; d++) {
+                    const date = new Date(tahun, bulan - 1, d);
+                    if (date.getDay() % 6 !== 0) totalHariAktif++; // bukan Sabtu/Minggu
+                }
+                for (let d = 1; d <= hariDalamBulan; d++) {
+                    const st = absen[d] || '';
+                    if (st === 'S') s++;
+                    else if (st === 'I') i++;
+                    else if (st === 'A') a++;
+                }
+                const h = totalHariAktif - (s + i + a);
+                html += `<td>${h >= 0 ? h : 0}</td><td>${s}</td><td>${i}</td><td>${a}</td></tr>`;
             });
             html += `</tbody>`;
             document.getElementById('tabelAbsen').innerHTML = html;
@@ -349,13 +363,10 @@
             }
         }
 
-        function getStatusClass(status, tahun, bulan, hari) {
+        function getStatusClass(tahun, bulan, hari) {
             let kelas = '';
-            if (status === 'S') kelas = 'status-s';
-            else if (status === 'I') kelas = 'status-i';
-            else if (status === 'A') kelas = 'status-a';
             const date = new Date(tahun, bulan-1, hari);
-            if ([0,6].includes(date.getDay())) kelas += ' weekend-cell';
+            if ([0,6].includes(date.getDay())) kelas = 'weekend-cell';
             return kelas;
         }
 
@@ -363,24 +374,22 @@
             const key = cell.dataset.key;
             const hari = cell.dataset.hari;
             const sekarang = cell.textContent.trim();
-            let statusAsli = '';
-            if (sekarang === '✅') statusAsli = '';
-            else statusAsli = sekarang;
 
             let berikutnya = '';
-            if (statusAsli === '') berikutnya = 'S';
-            else if (statusAsli === 'S') berikutnya = 'I';
-            else if (statusAsli === 'I') berikutnya = 'A';
-            else if (statusAsli === 'A') berikutnya = '';
+            if (sekarang === '') berikutnya = 'S';
+            else if (sekarang === 'S') berikutnya = 'I';
+            else if (sekarang === 'I') berikutnya = 'A';
+            else if (sekarang === 'A') berikutnya = '';
 
-            // Simpan ke data lokal
+            cell.textContent = berikutnya;
+            cell.className = 'date-cell ' + getStatusClass(document.getElementById('tahunAbsen').value, document.getElementById('bulanAbsen').value, hari);
+            if (berikutnya === 'S') cell.className += ' status-s';
+            else if (berikutnya === 'I') cell.className += ' status-i';
+            else if (berikutnya === 'A') cell.className += ' status-a';
+
             if (!dataAbsensi[key]) dataAbsensi[key] = {};
             if (berikutnya === '') delete dataAbsensi[key][hari];
             else dataAbsensi[key][hari] = berikutnya;
-
-            // Tampilkan di UI
-            cell.textContent = berikutnya === '' ? '✅' : berikutnya;
-            cell.className = 'date-cell ' + getStatusClass(berikutnya, document.getElementById('tahunAbsen').value, document.getElementById('bulanAbsen').value, hari);
         }
 
         function toggleEditMode() {
