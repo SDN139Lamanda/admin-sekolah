@@ -83,10 +83,10 @@
 <body>
     <div class="container">
         <div class="nav-btns">
-            <!-- ✅ Kembali ke Fitur 3 (ape.html) -->
+            <!-- Kembali ke menu Fitur 3 (ape.html) -->
             <a href="ape.html" class="nav-btn">↑ Kembali ke Fitur 3</a>
-            <!-- ✅ Kembali ke Menu Utama -->
-            <a href="../tatakelola139.html" class="nav-btn">🏠 Menu Utama</a>
+            <!-- Kembali ke menu utama (pintar) -->
+            <a href="#" onclick="kembaliKeMenuUtama(); return false;" class="nav-btn">🏠 Menu Utama</a>
         </div>
 
         <h1>3A. Jurnal Refleksi</h1>
@@ -105,7 +105,7 @@
     </div>
 
     <script>
-        // 🔧 Konfigurasi Firebase (sesuai dengan milik Anda)
+        // 🔧 Konfigurasi Firebase Anda
         const firebaseConfig = {
             apiKey: "AIzaSyD5stzd9mu0n58o_QYL5Jt1aXOP9ANQl80",
             authDomain: "sd139lamanda-d7e39.firebaseapp.com",
@@ -115,17 +115,12 @@
             messagingSenderId: "101544011485",
             appId: "1:101544011485:web:74c0fa59d3c4bf74451d34"
         };
-
-        // Inisialisasi Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Set tanggal hari ini
         document.getElementById('tanggal').value = new Date().toISOString().split('T')[0];
-
         let currentEditId = null;
 
-        // Simpan atau Update
         document.getElementById('btnSimpan').addEventListener('click', () => {
             const t = document.getElementById('tahun').value.trim();
             const d = document.getElementById('tanggal').value;
@@ -171,7 +166,6 @@
             document.getElementById('btnEdit').style.display = 'none';
         }
 
-        // Tampilkan daftar real-time
         db.ref('jurnalRefleksi').orderByChild('timestamp').on('value', (snapshot) => {
             const container = document.getElementById('daftar');
             const data = snapshot.val();
@@ -197,7 +191,6 @@
             `).join('');
         });
 
-        // Fungsi edit & hapus (global agar bisa dipanggil dari inline onclick)
         window.editItem = function(id, item) {
             document.getElementById('tahun').value = item.tahunPelajaran;
             document.getElementById('tanggal').value = item.tanggalISO;
@@ -214,6 +207,17 @@
                     .then(() => alert('✅ Entri jurnal dihapus!'));
             }
         };
+
+        // ✅ Fungsi navigasi pintar (sama seperti di ape.html)
+        function kembaliKeMenuUtama() {
+            const path = window.location.pathname;
+            const parts = path.split('/').filter(part => part !== '');
+            if (parts.length >= 2) {
+                window.location.href = '../tatakelola139.html';
+            } else {
+                window.location.href = 'tatakelola139.html';
+            }
+        }
     </script>
 </body>
 </html>
