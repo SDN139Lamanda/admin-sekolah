@@ -79,8 +79,7 @@
 </head>
 <body>
     <div class="container">
-        <!-- ✅ DIPERBAIKI: naik satu level ke root -->
-        <a href="../tatakelola139.html" class="back-btn">← Kembali ke Menu Utama</a>
+        <a href="#" onclick="kembaliKeMenuUtama(); return false;" class="back-btn">← Kembali ke Menu Utama</a>
 
         <h1>Administrasi Penilaian dan Evaluasi</h1>
 
@@ -112,5 +111,17 @@
             <a href="3d-laporanpendidikan.html">→ Buka Laporan Pendidikan</a>
         </div>
     </div>
+
+    <script>
+        function kembaliKeMenuUtama() {
+            const path = window.location.pathname;
+            const parts = path.split('/').filter(part => part !== '');
+            if (parts.length >= 2) {
+                window.location.href = '../tatakelola139.html';
+            } else {
+                window.location.href = 'tatakelola139.html';
+            }
+        }
+    </script>
 </body>
 </html>
