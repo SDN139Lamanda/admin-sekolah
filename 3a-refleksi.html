@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3A. Jurnal Refleksi</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 15px;
+            background: #f9fbfd;
+            color: #333;
+        }
+        .container {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .nav-btns {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .nav-btn {
+            padding: 8px 12px;
+            background: #7f8c8d;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+        }
+        .nav-btn:hover { background: #6c7b8b; }
+        h1 { text-align: center; color: #2c3e50; margin-top: 0; }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea { height: 120px; resize: vertical; }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 8px 0;
+        }
+        .btn-simpan { background: #2ecc71; color: white; }
+        .btn-edit { background: #f39c12; color: white; display: none; }
+        .entri {
+            background: #f8f9fa;
+            padding: 14px;
+            margin: 12px 0;
+            border-radius: 6px;
+            border-left: 3px solid #3498db;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .entri-actions button {
+            margin-top: 8px;
+            padding: 6px 10px;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-btns">
+            <!-- ✅ Kembali ke Fitur 3 (ape.html) -->
+            <a href="ape.html" class="nav-btn">↑ Kembali ke Fitur 3</a>
+            <!-- ✅ Kembali ke Menu Utama -->
+            <a href="../tatakelola139.html" class="nav-btn">🏠 Menu Utama</a>
+        </div>
+
+        <h1>3A. Jurnal Refleksi</h1>
+
+        <div class="form">
+            <input type="text" id="tahun" placeholder="Tahun Pelajaran (contoh: 2025/2026)" value="2025/2026">
+            <input type="date" id="tanggal">
+            <textarea id="refleksi" placeholder="Deskripsi refleksi (apa yang terjadi, dipelajari, tantangan, dll.)" required></textarea>
+            <input type="text" id="keterangan" placeholder="Keterangan tambahan (opsional)">
+            <button class="btn btn-simpan" id="btnSimpan">✅ Simpan Jurnal</button>
+            <button class="btn btn-edit" id="btnEdit">✏️ Update Jurnal</button>
+        </div>
+
+        <h3>Entri Jurnal (Real-Time)</h3>
+        <div id="daftar"><p>Memuat data dari Firebase…</p></div>
+    </div>
+
+    <script>
+        // 🔧 Konfigurasi Firebase (sesuai dengan milik Anda)
+        const firebaseConfig = {
+            apiKey: "AIzaSyD5stzd9mu0n58o_QYL5Jt1aXOP9ANQl80",
+            authDomain: "sd139lamanda-d7e39.firebaseapp.com",
+            databaseURL: "https://sd139lamanda-d7e39-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "sd139lamanda-d7e39",
+            storageBucket: "sd139lamanda-d7e39.firebasestorage.app",
+            messagingSenderId: "101544011485",
+            appId: "1:101544011485:web:74c0fa59d3c4bf74451d34"
+        };
+
+        // Inisialisasi Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Set tanggal hari ini
+        document.getElementById('tanggal').value = new Date().toISOString().split('T')[0];
+
+        let currentEditId = null;
+
+        // Simpan atau Update
+        document.getElementById('btnSimpan').addEventListener('click', () => {
+            const t = document.getElementById('tahun').value.trim();
+            const d = document.getElementById('tanggal').value;
+            const r = document.getElementById('refleksi').value.trim();
+            const k = document.getElementById('keterangan').value.trim();
+            if (!t || !d || !r) {
+                alert('Harap isi Tahun Pelajaran, Tanggal, dan Deskripsi Refleksi!');
+                return;
+            }
+
+            const hariList = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
+            const dt = new Date(d);
+            const data = {
+                tahunPelajaran: t,
+                tanggalISO: d,
+                hari: hariList[dt.getDay()],
+                tanggalIndo: dt.toLocaleDateString('id-ID'),
+                refleksi: r,
+                keterangan: k || '-',
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
+
+            if (currentEditId) {
+                db.ref('jurnalRefleksi/' + currentEditId).update(data)
+                    .then(() => {
+                        resetForm();
+                        alert('✅ Jurnal berhasil diperbarui!');
+                    });
+            } else {
+                db.ref('jurnalRefleksi').push(data)
+                    .then(() => {
+                        resetForm();
+                        alert('✅ Jurnal berhasil disimpan!');
+                    });
+            }
+        });
+
+        function resetForm() {
+            document.getElementById('refleksi').value = '';
+            document.getElementById('keterangan').value = '';
+            currentEditId = null;
+            document.getElementById('btnSimpan').style.display = 'block';
+            document.getElementById('btnEdit').style.display = 'none';
+        }
+
+        // Tampilkan daftar real-time
+        db.ref('jurnalRefleksi').orderByChild('timestamp').on('value', (snapshot) => {
+            const container = document.getElementById('daftar');
+            const data = snapshot.val();
+            if (!data) {
+                container.innerHTML = '<p>Belum ada entri jurnal.</p>';
+                return;
+            }
+
+            const entries = Object.entries(data)
+                .map(([id, val]) => ({ id, ...val }))
+                .sort((a, b) => b.timestamp - a.timestamp);
+
+            container.innerHTML = entries.map(item => `
+                <div class="entri">
+                    <div><strong>${item.hari}, ${item.tanggalIndo}</strong> (${item.tahunPelajaran})</div>
+                    <div>${item.refleksi}</div>
+                    <div><em>Ket: ${item.keterangan}</em></div>
+                    <div class="entri-actions">
+                        <button onclick="editItem('${item.id}', ${JSON.stringify(item).replace(/'/g, "\\'")})">Edit</button>
+                        <button onclick="deleteItem('${item.id}')">Hapus</button>
+                    </div>
+                </div>
+            `).join('');
+        });
+
+        // Fungsi edit & hapus (global agar bisa dipanggil dari inline onclick)
+        window.editItem = function(id, item) {
+            document.getElementById('tahun').value = item.tahunPelajaran;
+            document.getElementById('tanggal').value = item.tanggalISO;
+            document.getElementById('refleksi').value = item.refleksi;
+            document.getElementById('keterangan').value = (item.keterangan === '-' ? '' : item.keterangan);
+            currentEditId = id;
+            document.getElementById('btnSimpan').style.display = 'none';
+            document.getElementById('btnEdit').style.display = 'block';
+        };
+
+        window.deleteItem = function(id) {
+            if (confirm('Yakin ingin menghapus entri jurnal ini?')) {
+                db.ref('jurnalRefleksi/' + id).remove()
+                    .then(() => alert('✅ Entri jurnal dihapus!'));
+            }
+        };
+    </script>
+</body>
+</html>
